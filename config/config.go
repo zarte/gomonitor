@@ -24,9 +24,7 @@ func SetConfig() {
 	}else{
 		Gconfig.CurExePath =  dir+"/"
 	}
-	Gconfig.CurExePath =  "./"
 	Gconfig.GLoger = zloger.NewLog(Gconfig.CurExePath +"logs")
-
 
 	Gconfig.WebPort = "5556"
 	Gconfig.ChanList = new (sync.Map)
