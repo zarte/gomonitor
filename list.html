@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charSet="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台程序关联系统</title>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="row">
+            <button type="button" class="btn btn-default" onclick="showAddModel()">添加</button>
+            <button type="button" class="btn btn-default" onclick="getList()">刷新</button>
+            <button type="button" class="btn btn-danger" onclick="clearlogin()">清除登录记录</button>
+        </div>
+        <div class="row">
+        <table class="table table-hover">
+            <caption>程序列表</caption>
+            <thead>
+            <tr>
+                <th>Id</th>
+                <th>Cmd</th>
+                <th width="200">操作</th>
+            </tr>
+            </thead>
+            <tbody id="exelist">
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="loginModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">
+                   登录
+                </h4>
+            </div>
+            <div class="modal-body">
+                <form role="form" class="form-horizontal">
+                    <div class="form-group">
+                        <label for="name" class="col-sm-2 col-xs-2 control-label">用户名</label>
+                        <div class="col-sm-8 col-xs-10">
+                            <input type="text" class="form-control" id="name" placeholder="请输入昵称(支持中文英文数字6~20)" name="name"  maxlength="32">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="passwd" class="col-sm-2 col-xs-2 control-label">密码</label>
+                        <div class="col-sm-8 col-xs-10">
+                            <input type="password" class="form-control" id="passwd" placeholder="请输入密码" name="passwd" maxlength="32">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="loginbtn"  data-loading-text="Loading..." >
+                     登录
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+<div class="modal fade" id="addModel" tabindex="-2" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">
+                    添加任务
+                </h4>
+            </div>
+            <div class="modal-body">
+                <form role="form" class="form-horizontal">
+                    <div class="form-group">
+                        <label for="name" class="col-sm-2 col-xs-2 control-label">ExeId</label>
+                        <div class="col-sm-8 col-xs-10">
+                            <input type="text" class="form-control" id="exeid" placeholder="请输入数字" name="exeid"  maxlength="32">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="passwd" class="col-sm-2 col-xs-2 control-label">Cmd</label>
+                        <div class="col-sm-8 col-xs-10">
+                            <input type="text" class="form-control" id="cmd" placeholder="请输入执行语句" name="cmd" maxlength="32">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="addbtn"  data-loading-text="Loading..." >
+                    添加
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+<div class="modal fade" id="delModel" tabindex="-3" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">
+                    停止任务
+                </h4>
+            </div>
+            <div class="modal-body">
+              确定要停止该任务？
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="stopbtnm"  data-loading-text="Loading..." >
+                    确定
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+<div class="modal fade" id="logModel" tabindex="-3" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">
+                    日志查看
+                </h4>
+            </div>
+            <div class="modal-body" style="max-height: 700px;overflow-y: auto">
+                <pre  id="logcontent"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+</body>
+<style>
+    #contentdiv, #userlist{
+        height: 600px;
+        overflow: auto;
+        border: 1px solid #cccccc;
+        border-radius: 5px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    #userlist{
+    }
+    .operadiv{
+        margin-top: 10px;
+    }
+    #userlist ul{
+        padding: 0;
+        margin: 5px;
+    }
+    #userlist ul li{
+        list-style: none;
+        margin-top: 5px;
+    }
+    /*
+    #userlist ul li:hover{
+        background: #4bc6df;
+        color: #ffffff;
+    }
+    */
+    #userlist ul li img{
+        width: 25px;
+        height: 25px;
+        display: inline-block;
+    }
+    #userlist ul li span{
+        display: inline-block;
+        height: 25px;
+        line-height: 25px;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    .omsgdiv .username,.somsgdiv .username{
+        margin-left: 5px;
+    }
+    .omsgdiv img,.somsgdiv img{
+        width: 25px;
+        height: 25px;
+    }
+    .somsgdiv{
+        text-align: right;
+    }
+
+    .chatoperadiv{
+        text-align: right;
+        position: relative;
+    }
+    .btn-default.focus, .btn-default:focus{
+        outline: aliceblue;
+    }
+    #emojidiv{
+        background-color: #ffffff;
+        border: 1px solid #cccccc;
+        padding: 10px;
+        position: absolute;
+        left: -255px;
+        top:-240px;
+        display: none;
+    }
+    #emojibtn{
+        position: relative;
+    }
+    #emojibtn:focus #emojidiv{
+        display:block;
+    }
+    #emojidiv ul{
+        padding: 5px;
+        width: 300px;
+        overflow-y: auto;
+        height: 200px;
+    }
+    #emojidiv li{
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        list-style: none;
+        float: left;
+        padding-top: 10px;
+    }
+    #emojidiv li:hover{
+        background-color: #cccccc;
+    }
+    #emojidiv img{
+        width: 30px;
+        height: 30px;
+    }
+</style>
+<script>
+    var  loginflag = false;
+    var webhost = '/';
+    var jwt ='';
+    var loginkey = 'hbylogininfo'
+    checklogin();
+    function checklogin() {
+        jwt = localStorage.getItem(loginkey)
+        if(!jwt){
+            //弹出登陆窗
+            $('#loginModel').modal('show')
+        }else{
+            getList()
+        }
+    }
+
+    function clearlogin() {
+        localStorage.removeItem(loginkey)
+        checklogin()
+    }
+    function showAddModel() {
+        $('#addModel').modal('show')
+    }
+    function alartmsg(str) {
+        alert(str);
+    }
+
+    function getList(){
+        $.ajax({
+            url: webhost +'exelist',
+            type:'get',
+            data:{},
+            beforeSend: function (XMLHttpRequest) {
+                XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
+            },
+            dataType: 'json',
+            success:function (res) {
+                if(res.code=="200"){
+                    var str = "";
+                    if(res.data){
+                        for(var i in res.data){
+                            str+=' <tr>\n' +
+                                '                <td>'+res.data[i].exeid+'</td>\n' +
+                                '                <td>'+res.data[i].cmd+'</td>\n' +
+                                '                <td>\n' ;
+                            if(res.data[i].status=="stop"){
+                                str+=   '                    <button type="button" class="btn btn-success startbtn" data-id="'+res.data[i].exeid+'">启动</button>\n' ;
+                            }else{
+                                str+=   '                    <button type="button" class="btn btn-danger delbtn" data-id="'+res.data[i].exeid+'">停止</button>\n' ;
+                            }
+
+                            str+= '                    <button type="button" class="btn btn-info logbtn" data-id="'+res.data[i].exeid+'">日志查看</button>\n' +
+                                '                </td>\n' +
+                                '            </tr>';
+                        }
+                    }
+                    $('#exelist').html(str);
+                }else{
+                    alartmsg(res.msg)
+                }
+
+            },
+            error:function (e) {
+                console.log(e)
+                alartmsg('获取列表失败')
+            }
+        })
+    }
+    var gid = 0;
+    $('.container').on('click','.delbtn',function () {
+        gid = $(this).attr('data-id')
+        $('#delModel').modal('show')
+    })
+
+    $('.container').on('click','.logbtn',function () {
+        gid = $(this).attr('data-id')
+        $('#logModel').modal('show')
+        $.ajax({
+            url: webhost +'seelog',
+            type:'get',
+            data:{
+                exeid: gid
+            },
+            beforeSend: function (XMLHttpRequest) {
+                XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
+            },
+            dataType: 'json',
+            success:function (res) {
+                if(res.code=="200"){
+                    $('#logcontent').html(res.data)
+                }else{
+                    alartmsg(res.msg)
+                }
+            },
+            error:function (e) {
+                console.log(e)
+                alartmsg('查询失败')
+            }
+        })
+    })
+
+
+    $('.container').on('click','.startbtn',function () {
+        gid = $(this).attr('data-id')
+        $.ajax({
+            url: webhost +'startexe',
+            type:'get',
+            data:{
+                exeid: gid,
+                op:"start"
+            },
+            beforeSend: function (XMLHttpRequest) {
+                XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
+            },
+            dataType: 'json',
+            success:function (res) {
+                if(res.code=="200"){
+                    getList()
+                }else{
+                    alartmsg(res.msg)
+                }
+            },
+            error:function (e) {
+                console.log(e)
+                alartmsg('启动失败')
+            }
+        })
+    })
+
+    $('#stopbtnm').click(function () {
+        $('#delModel').modal('hide')
+        $.ajax({
+            url: webhost +'startexe',
+            type:'get',
+            data:{
+                exeid: gid,
+                op:"stop"
+            },
+            beforeSend: function (XMLHttpRequest) {
+                XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
+            },
+            dataType: 'json',
+            success:function (res) {
+                if(res.code=="200"){
+                    setTimeout(function () {
+                        getList()
+                    },3000)
+                }else{
+                    alartmsg(res.msg)
+                }
+            },
+            error:function (e) {
+                console.log(e)
+                alartmsg('停止失败')
+            }
+        })
+    });
+
+
+    $('#loginbtn').click(function(){
+        if(!$('#name').val()){
+            $('#name').focus()
+            return
+        }
+        if(!$('#passwd').val()){
+            $('#passwd').focus()
+            return
+        }
+        $(this).button('loading');
+        $.ajax({
+            url: webhost +'checklogin',
+            type:'post',
+            data:{
+                name: $('#name').val(),
+                passwd: $('#passwd').val(),
+            },
+            dataType: 'json',
+            success:function (res) {
+                if(res.code=="200"){
+                    if(res.data){
+                        jwt = res.data
+                        localStorage.setItem(loginkey,res.data)
+                        $('#loginModel').modal('hide')
+                        getList()
+                    }else{
+                        alartmsg('登录失败')
+                    }
+                }else{
+                    alartmsg(res.msg)
+                }
+                $('#loginbtn').button('reset');
+            },
+            error:function (e) {
+                console.log(e)
+                $('#loginbtn').button('reset');
+                alartmsg('登录失败')
+            }
+        })
+    })
+    $('#addbtn').click(function(){
+        if(!$('#exeid').val()){
+            $('#exeid').focus()
+            return
+        }
+        if(!$('#cmd').val()){
+            $('#cmd').focus()
+            return
+        }
+        $(this).button('loading');
+        $.ajax({
+            url: webhost +'addexe',
+            type:'post',
+            data:{
+                exeid: $('#exeid').val(),
+                cmd: $('#cmd').val(),
+            },
+            beforeSend: function (XMLHttpRequest) {
+             XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
+            },
+            dataType: 'json',
+            success:function (res) {
+                if(res.code=="200"){
+                    $('#addModel').modal('hide')
+                    getList()
+                }else{
+                    alartmsg(res.msg)
+                }
+                $('#addbtn').button('reset');
+            },
+            error:function (e) {
+                console.log(e)
+                $('#addbtn').button('reset');
+                alartmsg('添加失败')
+            }
+        })
+    })
+</script>
+</html>

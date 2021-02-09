@@ -7,12 +7,33 @@ import (
 	"errors"
 	"context"
 	"net/http"
+	"strings"
 )
 
 
 func StartExe(w http.ResponseWriter, r *http.Request) {
 	//打印请求的方法
 	if r.Method == "GET" {
+		Authorization :=r.Header.Get("Authorization")
+		tmp := strings.Fields(Authorization)
+		if len(tmp)>1 {
+			_, err := utils.ParseToken(tmp[1])
+			if err != nil {
+				result, _ := json.Marshal(&utils.Comresult{
+					Code: 4,
+					Msg:  "fail",
+				})
+				w.Write(result)
+				return
+			}
+		}else{
+			result, _ := json.Marshal(&utils.Comresult{
+				Code: 4,
+				Msg:  "fail",
+			})
+			w.Write(result)
+			return
+		}
 		query :=r.URL.Query()
 		if len(query["exeid"]) >0 && len(query["op"])>0 {
 			exeId :=query["exeid"][0]
@@ -76,10 +97,10 @@ func startTask(exeid string)(bool,error)  {
 	Command(exeinfo.(utils.ExeInfo).Cmd,exeid)
 	return true,nil
 }
-func stopTask(exeid string)(bool,error)  {
+func stopTask(exeid string) (bool,error) {
 	exeInfo,err := config.Gconfig.ExeList.Load(exeid)
 	if err {
-		if exeInfo.(utils.ExeInfo).Status == "start" ||exeInfo.(utils.ExeInfo).Status == "run"{
+		if exeInfo.(utils.ExeInfo).Status == "start" || exeInfo.(utils.ExeInfo).Status == "run"{
 			exeInfo.(utils.ExeInfo).Cancel.(context.CancelFunc)()
 		} else {
 			return false,errors.New("程序未运行")

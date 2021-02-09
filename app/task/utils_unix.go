@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"gomonitor/utils"
+	"gomonitor/config"
 	"io"
 	"os/exec"
 	"syscall"
@@ -45,6 +46,7 @@ func Command(cmd string, exeid string) error {
 			}
 			byte2String :=utils.ConvertByte2String(readString, "UTF8")
 			fmt.Print(byte2String)
+			config.Gconfig.GLoger.InfoLog(byte2String,exeid+"_")
 		}
 	}()
 	go func() {
@@ -56,6 +58,7 @@ func Command(cmd string, exeid string) error {
 			}
 			byte2String := utils.ConvertByte2String(readString, "UTF8")
 			fmt.Print(byte2String)
+			config.Gconfig.GLoger.InfoLog(byte2String,exeid+"_")
 		}
 	}()
 	err = c.Start()
