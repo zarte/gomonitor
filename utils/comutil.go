@@ -75,6 +75,7 @@ func ConvertByte2String(byte []byte, charset Charset) string {
 type ExeInfo struct {
 	Exeid  	string      `json:"exeid"`
 	Cmd        string      `json:"cmd"`
+	Name        string      `json:"name"`
 	Status        string       `json:"status"`
 	Cancel        interface{}      `json:"-"`
 }

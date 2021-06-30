@@ -96,9 +96,18 @@ func GetExeList() []utils.ExeInfo{
 		list = append(list,v.(utils.ExeInfo) )
 		return true
 	})
+	sortlist(list)
 	return list
 }
-
+func sortlist(list []utils.ExeInfo) {
+	for i := 0; i < len(list)-1; i++ {
+		for j := i+1; j < len(list); j++ {
+			if  list[i].Exeid>list[j].Exeid{
+				list[i],list[j] = list[j],list[i]
+			}
+		}
+	}
+}
 func ExeLog(w http.ResponseWriter, r *http.Request) {
 	//打印请求的方法
 	if r.Method == "GET" {
@@ -141,7 +150,7 @@ func ExeList(w http.ResponseWriter, r *http.Request) {
 			if err!=nil{
 				result, _ := json.Marshal(&utils.Comresult{
 					Code: 4,
-					Msg: "success",
+					Msg: "no login",
 				})
 				w.Write(result)
 				return
@@ -190,7 +199,8 @@ func AddExeList(w http.ResponseWriter, r *http.Request) {
 		}
 		exeid :=r.FormValue("exeid")
 		cmd :=r.FormValue("cmd")
-		if exeid !="" && cmd!="" {
+		name :=r.FormValue("name")
+		if exeid !="" && cmd!=""  && name!="" {
 			_,res:=config.Gconfig.ExeList.Load(exeid)
 			if res{
 				result, _ := json.Marshal(utils.Comresult{
@@ -202,6 +212,7 @@ func AddExeList(w http.ResponseWriter, r *http.Request) {
 				config.Gconfig.ExeList.Store(exeid,utils.ExeInfo{
 					Exeid: exeid,
 					Cmd: cmd,
+					Name: name,
 					Status : "stop",
 				})
 				//记录list

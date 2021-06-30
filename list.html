@@ -23,6 +23,7 @@
             <thead>
             <tr>
                 <th>Id</th>
+                <th>Name</th>
                 <th>Cmd</th>
                 <th width="200">操作</th>
             </tr>
@@ -55,7 +56,7 @@
                     <div class="form-group">
                         <label for="passwd" class="col-sm-2 col-xs-2 control-label">密码</label>
                         <div class="col-sm-8 col-xs-10">
-                            <input type="password" class="form-control" id="passwd" placeholder="请输入密码" name="passwd" maxlength="32">
+                            <input type="password" class="form-control" id="passwd" placeholder="请输入密码" name="passwd" maxlength="32" >
                         </div>
                     </div>
                 </form>
@@ -83,13 +84,19 @@
                     <div class="form-group">
                         <label for="name" class="col-sm-2 col-xs-2 control-label">ExeId</label>
                         <div class="col-sm-8 col-xs-10">
-                            <input type="text" class="form-control" id="exeid" placeholder="请输入数字" name="exeid"  maxlength="32">
+                            <input type="text" class="form-control" id="exeid" placeholder="请输入数字" name="exeid"  maxlength="32" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="name" class="col-sm-2 col-xs-2 control-label">Name</label>
+                        <div class="col-sm-8 col-xs-10">
+                            <input type="text" class="form-control" id="exename" placeholder="标识名" name="exename"  maxlength="32" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="passwd" class="col-sm-2 col-xs-2 control-label">Cmd</label>
                         <div class="col-sm-8 col-xs-10">
-                            <input type="text" class="form-control" id="cmd" placeholder="请输入执行语句" name="cmd" maxlength="255">
+                            <input type="text" class="form-control" id="cmd" placeholder="请输入执行语句" name="cmd" maxlength="255" autocomplete="off">
                         </div>
                     </div>
                 </form>
@@ -285,6 +292,7 @@
                         for(var i in res.data){
                             str+=' <tr>\n' +
                                 '                <td>'+res.data[i].exeid+'</td>\n' +
+                                '                <td>'+res.data[i].name+'</td>\n' +
                                 '                <td>'+res.data[i].cmd+'</td>\n' +
                                 '                <td>\n' ;
                             if(res.data[i].status=="stop"){
@@ -457,6 +465,7 @@
             data:{
                 exeid: $('#exeid').val(),
                 cmd: $('#cmd').val(),
+                name: $('#exename').val(),
             },
             beforeSend: function (XMLHttpRequest) {
              XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
