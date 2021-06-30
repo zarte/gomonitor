@@ -9,9 +9,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"html/template"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
+
+const (
+	//日志删除期限
+	diffTime = 3600 * 24 * 30
+)
+
 
 func Starweb()  {
 	config.SetConfig()
@@ -25,11 +33,41 @@ func Starweb()  {
 	http.HandleFunc("/checklogin", CheckLogin)
 
 	http.HandleFunc("/", WebList)
-
+	clearlog()
 	if err := http.ListenAndServe(":"+config.Gconfig.WebPort, nil); err != nil {
 		fmt.Println(err)
 	}
 
+}
+func clearlog()  {
+	//定时任务
+	ticker := time.NewTicker(time.Hour * 24)
+	go func() {
+		for range ticker.C {
+			fmt.Println("clearlog:" + time.Now().Format("2006-01-02 15:04:05"))
+			nowTime := time.Now().Unix()
+			err := filepath.Walk(config.Gconfig.CurExePath+"logs/", func(path string, f os.FileInfo, err error) error {
+				if f == nil {
+					return err
+				}
+				if f.IsDir() {
+					return nil
+				}
+				fileTime := f.ModTime().Unix()
+				if (nowTime - fileTime) > diffTime { //判断文件是否超过7天
+					fmt.Printf("Delete file %v !\r\n", path)
+					err2:=os.RemoveAll(path)
+					if err2 != nil {
+						fmt.Println(err2)
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				fmt.Printf("filepath.Walk() returned %v\r\n", err)
+			}
+		}
+	}()
 }
 func initExeList()  {
 	content,err := ioutil.ReadFile(config.Gconfig.CurExePath + "/tmpexelist.txt")
