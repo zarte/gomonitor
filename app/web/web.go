@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"gomonitor/app/task"
 	"gomonitor/config"
@@ -33,7 +34,15 @@ func Starweb()  {
 	http.HandleFunc("/checklogin", CheckLogin)
 
 	http.HandleFunc("/", WebList)
+	var staticServiceFlag bool
+	flag.BoolVar(&staticServiceFlag,"staticflag",false, "Use -staticflag")
+	flag.Parse()
+	if staticServiceFlag {
+		http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir(config.Gconfig.CurExePath))))
+	}
+
 	clearlog()
+	fmt.Println("listen "+config.Gconfig.WebPort)
 	if err := http.ListenAndServe(":"+config.Gconfig.WebPort, nil); err != nil {
 		fmt.Println(err)
 	}
@@ -98,7 +107,7 @@ func CheckLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		user :=r.FormValue("name")
 		pwd :=r.FormValue("passwd")
-		if user=="admin" && pwd == "123456" {
+		if user=="spirit" && pwd == "adcptbtptp" {
 			token := utils.GetJwt(user,&utils.UserInfo{
 				Id:     "1",
 				Name:   "admin",
