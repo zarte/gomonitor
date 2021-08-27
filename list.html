@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charSet="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,minimum-scale=1.0,user-scalable=0">
     <title>后台程序关联系统</title>
     <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -15,22 +15,24 @@
         <div class="row">
             <button type="button" class="btn btn-default" onclick="showAddModel()">添加</button>
             <button type="button" class="btn btn-default" onclick="getList()">刷新</button>
-            <button type="button" class="btn btn-danger" onclick="clearlogin()">清除登录记录</button>
+            <button type="button" class="btn btn-danger" onclick="clearlogin()">登出</button>
         </div>
         <div class="row">
-        <table class="table table-hover">
-            <caption>程序列表</caption>
-            <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Cmd</th>
-                <th width="200">操作</th>
-            </tr>
-            </thead>
-            <tbody id="exelist">
-            </tbody>
-        </table>
+         <div class="table-responsive">
+            <table class="table table-hover">
+                <caption>程序列表</caption>
+                <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Cmd</th>
+                    <th width="250">操作</th>
+                </tr>
+                </thead>
+                <tbody id="exelist">
+                </tbody>
+            </table>
+         </div>
         </div>
     </div>
 </div>
@@ -111,7 +113,7 @@
     </div><!-- /.modal -->
 </div>
 
-<div class="modal fade" id="delModel" tabindex="-3" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade" id="stopModel" tabindex="-3" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -124,6 +126,27 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" id="stopbtnm"  data-loading-text="Loading..." >
+                    确定
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+<div class="modal fade" id="delModel" tabindex="-3" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">
+                    删除任务
+                </h4>
+            </div>
+            <div class="modal-body">
+                确定要删除该任务？
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="delbtnm"  data-loading-text="Loading..." >
                     确定
                 </button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
@@ -254,6 +277,9 @@
     var webhost = '/';
     var jwt ='';
     var loginkey = 'hbylogininfo'
+    var gline = 50;
+    var glogticker = undefined;
+    var gseelog = false;
     checklogin();
     function checklogin() {
         jwt = localStorage.getItem(loginkey)
@@ -297,18 +323,25 @@
                                 '                <td>\n' ;
                             if(res.data[i].status=="stop"){
                                 str+=   '                    <button type="button" class="btn btn-success startbtn" data-id="'+res.data[i].exeid+'">启动</button>\n' ;
+                                str+=   '                    <button type="button" class="btn btn-danger delbtn" data-id="'+res.data[i].exeid+'">删除</button>\n' ;
                             }else{
-                                str+=   '                    <button type="button" class="btn btn-danger delbtn" data-id="'+res.data[i].exeid+'">停止</button>\n' ;
+                                str+=   '                    <button type="button" class="btn btn-danger stopbtn" data-id="'+res.data[i].exeid+'">停止</button>\n' ;
                             }
 
-                            str+= '                    <button type="button" class="btn btn-info logbtn" data-id="'+res.data[i].exeid+'">日志查看</button>\n' +
+                            str+= '<button type="button" class="btn btn-info logbtn" data-id="'+res.data[i].exeid+'">监控</button>\n';
+                            str+= '<button type="button" class="btn btn-info logallbtn" data-id="'+res.data[i].exeid+'">日志</button>\n' +
                                 '                </td>\n' +
                                 '            </tr>';
                         }
                     }
                     $('#exelist').html(str);
                 }else{
-                    alartmsg(res.msg)
+                    if(res.msg=='no login'){
+                        //清除登录记录
+                        clearlogin()
+                    }else{
+                        alartmsg(res.msg)
+                    }
                 }
 
             },
@@ -323,15 +356,19 @@
         gid = $(this).attr('data-id')
         $('#delModel').modal('show')
     })
-
-    $('.container').on('click','.logbtn',function () {
+    $('.container').on('click','.stopbtn',function () {
         gid = $(this).attr('data-id')
-        $('#logModel').modal('show')
+        $('#stopModel').modal('show')
+    })
+
+    function getlog(all,line){
         $.ajax({
             url: webhost +'seelog',
             type:'get',
             data:{
-                exeid: gid
+                exeid: gid,
+                all: all,
+                line: line
             },
             beforeSend: function (XMLHttpRequest) {
                 XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
@@ -343,12 +380,38 @@
                 }else{
                     alartmsg(res.msg)
                 }
+                if(!all && gseelog){
+                    glogticker = setTimeout(function () {
+                        getlog(all,line);
+                    },3000)
+                }
             },
             error:function (e) {
                 console.log(e)
                 alartmsg('查询失败')
             }
         })
+    }
+    $('.container').on('click','.logbtn',function () {
+        gid = $(this).attr('data-id')
+        $('#logModel').modal('show')
+        gseelog = true;
+        getlog(0,gline);
+    })
+
+    $('.container').on('click','.logallbtn',function () {
+        gid = $(this).attr('data-id')
+        $('#logModel').modal('show')
+        getlog(1,0);
+    })
+
+
+    $('#logModel').on('hidden.bs.modal', function () {
+        // 执行一些动作...
+        gseelog = false;
+        if(glogticker){
+            clearTimeout(glogticker)
+        }
     })
 
 
@@ -380,7 +443,7 @@
     })
 
     $('#stopbtnm').click(function () {
-        $('#delModel').modal('hide')
+        $('#stopModel').modal('hide')
         $.ajax({
             url: webhost +'startexe',
             type:'get',
@@ -396,7 +459,7 @@
                 if(res.code=="200"){
                     setTimeout(function () {
                         getList()
-                    },3000)
+                    },2000)
                 }else{
                     alartmsg(res.msg)
                 }
@@ -408,6 +471,34 @@
         })
     });
 
+    $('#delbtnm').click(function () {
+        $('#delModel').modal('hide')
+        $.ajax({
+            url: webhost +'startexe',
+            type:'get',
+            data:{
+                exeid: gid,
+                op:"del"
+            },
+            beforeSend: function (XMLHttpRequest) {
+                XMLHttpRequest.setRequestHeader('Authorization', 'Bearer '+ jwt);
+            },
+            dataType: 'json',
+            success:function (res) {
+                if(res.code=="200"){
+                    setTimeout(function () {
+                        getList()
+                    },2000)
+                }else{
+                    alartmsg(res.msg)
+                }
+            },
+            error:function (e) {
+                console.log(e)
+                alartmsg('删除失败')
+            }
+        })
+    });
 
     $('#loginbtn').click(function(){
         if(!$('#name').val()){

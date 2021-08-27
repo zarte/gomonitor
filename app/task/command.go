@@ -1,11 +1,11 @@
 package task
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"gomonitor/config"
 	"gomonitor/utils"
-	"errors"
-	"context"
 	"net/http"
 	"strings"
 )
@@ -70,6 +70,23 @@ func StartExe(w http.ResponseWriter, r *http.Request) {
 					w.Write(result)
 				}
 				break
+			case "del":
+				_,res:=config.Gconfig.ExeList.Load(exeId)
+				if res{
+					config.Gconfig.ExeList.Delete(exeId)
+					result, _ := json.Marshal(utils.Comresult{
+						Code: 200,
+						Msg:  "success",
+					})
+					w.Write(result)
+				}else{
+					result, _ := json.Marshal(utils.Comresult{
+						Code: 4,
+						Msg:  "任务不存在",
+					})
+					w.Write(result)
+				}
+				break
 			default:
 				break
 			}
@@ -78,12 +95,16 @@ func StartExe(w http.ResponseWriter, r *http.Request) {
 }
 
 func ChangeExeInfo(exeid string, cmd string,status string, cancel context.CancelFunc){
-	config.Gconfig.ExeList.Store(exeid,utils.ExeInfo{
-		Exeid:   exeid,
-		Cmd:   cmd,
-		Status: status,
-		Cancel: cancel,
-	})
+	info,res := config.Gconfig.ExeList.Load(exeid)
+	if res {
+		config.Gconfig.ExeList.Store(exeid,utils.ExeInfo{
+			Exeid:   exeid,
+			Cmd:   cmd,
+			Name: info.(utils.ExeInfo).Name,
+			Status: status,
+			Cancel: cancel,
+		})
+	}
 }
 func startTask(exeid string)(bool,error)  {
 	//判断是否已经运行

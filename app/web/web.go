@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -94,6 +96,7 @@ func initExeList()  {
 					config.Gconfig.ExeList.Store(item.Exeid,utils.ExeInfo{
 						Exeid: item.Exeid,
 						Cmd: item.Cmd,
+						Name: item.Name,
 						Status : "stop",
 					})
 				}
@@ -172,14 +175,33 @@ func ExeLog(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			exeid :=r.FormValue("exeid")
+			getall :=r.FormValue("all")
+			tline :=r.FormValue("line")
 			if exeid !=""{
-				//获取log
-				result, _ := json.Marshal(utils.Comresult{
-					Code: 200,
-					Msg:  "success",
-					Data:getlogtail(exeid),
-				})
-				w.Write(result)
+				if getall == "1"{
+					//获取全部log
+					result, _ := json.Marshal(utils.Comresult{
+						Code: 200,
+						Msg:  "success",
+						Data:getlogtail(exeid,0),
+					})
+					w.Write(result)
+				}else {
+					line := 50
+					if tline !=""{
+						t,e := strconv.Atoi(tline)
+						if e==nil {
+							line = t
+						}
+					}
+					//仅获取最新部分
+					result, _ := json.Marshal(utils.Comresult{
+						Code: 200,
+						Msg:  "success",
+						Data:getlogtail(exeid,line),
+					})
+					w.Write(result)
+				}
 			} else {
 				w.Write([]byte("no"))
 			}
@@ -211,15 +233,65 @@ func ExeList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-func getlogtail(exeid string) string {
+func getlogtail(exeid string, line int) string {
 	filename := "info_"+exeid +"_" + time.Now().Format("2006-1-2")+".log"
-	bytes, err := ioutil.ReadFile(config.Gconfig.CurExePath+"/logs/"+filename)
-	if err != nil {
-		fmt.Println("error : %s", err)
-		return ""
+	if line>0 {
+		content,err := tail(config.Gconfig.CurExePath+"/logs/"+filename,line)
+		if err!=nil{
+			fmt.Println("error : %s", err)
+			return ""
+		}
+		return content
+	}else{
+		bytes, err := ioutil.ReadFile(config.Gconfig.CurExePath+"/logs/"+filename)
+		if err != nil {
+			fmt.Println("error : %s", err)
+			return ""
+		}
+		return string(bytes)
 	}
-	return string(bytes)
-
+}
+func tail(filepath string, n int) (string,error)  {
+	_,err := os.Stat(filepath)
+	if err == nil {
+		//获取文件总行数
+		file,err := os.Open(filepath)
+		if err != nil{
+			return "",err
+		}
+		defer file.Close()
+		fd:=bufio.NewReader(file)
+		count :=0
+		for {
+			_,err := fd.ReadString('\n')
+			if err!= nil{
+				break
+			}
+			count++
+		}
+		startline :=  0
+		if count>n {
+			startline = count-n
+		}
+		//开始读取
+		file.Seek(0,0)
+		//fd.Reset(file)
+		count =0
+		content :=""
+		for {
+			line,err := fd.ReadString('\n')
+			if err!= nil{
+				break
+			}
+			if count>=startline {
+				content +=line
+			}
+			count++
+		}
+		return  content,nil
+	}else {
+		return "",err
+	}
 }
 func AddExeList(w http.ResponseWriter, r *http.Request) {
 	//打印请求的方法
